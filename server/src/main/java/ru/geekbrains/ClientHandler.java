@@ -12,6 +12,7 @@ public class ClientHandler {
     private DataOutputStream out;
     private String nick;
     private boolean isAuth = false;
+    private int timeOut = 5000;
 
     public String getNick() {
         return nick;
@@ -27,7 +28,7 @@ public class ClientHandler {
             new Thread(() -> {
                 try {
                     while (true) {
-                        if (System.currentTimeMillis() <= (t + 5000L)) {
+                        if (System.currentTimeMillis() <= (t + timeOut)) {
                             String msg = in.readUTF();
                             if (msg.startsWith("/auth ")) {
                                 // /auth login1 pass1
@@ -48,7 +49,8 @@ public class ClientHandler {
                                 }
                             }
                         } else {
-                            out.writeUTF("время авторизации истекло, перезапусти клиент");
+                            out.writeUTF("время авторизации истекло, перезапустите клиент");
+                            server.unsubscrible(this);
                             socket.close();
                             out.close();
                             in.close();
