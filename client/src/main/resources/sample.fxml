@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.PasswordField?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ru.geekbrains.Controller">
+    <HBox fx:id="authPanel">
+        <TextField
+                fx:id="loginField"
+                HBox.hgrow="ALWAYS"
+                promptText="login" />
+        <PasswordField
+                fx:id="passField"
+                HBox.hgrow="ALWAYS"
+                onAction="#sendAuth"
+                promptText="password" />
+        <Button
+                onAction="#sendAuth"
+                text="Autorization" />
+    </HBox>
+    <TextArea
+            fx:id="chatArea"
+            editable="false"
+            VBox.vgrow="ALWAYS"
+            focusTraversable="false"/>
+    <HBox fx:id="msgPanel">
+        <TextField
+                fx:id="messageField"
+                onAction="#sendMsg"
+                HBox.hgrow="ALWAYS"
+                promptText="Write message" />
+        <Button
+                onAction="#sendMsg"
+                text="Send" />
+    </HBox>
+</VBox>
