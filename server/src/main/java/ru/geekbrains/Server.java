@@ -1,7 +1,5 @@
 package ru.geekbrains;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -41,11 +39,11 @@ public class Server {
         }
     }
 
-    public void subscrible (ClientHandler clientHandler) {
+    public void subscribe (ClientHandler clientHandler) {
         clients.add(clientHandler);
     }
 
-    public void unsubscrible (ClientHandler clientHandler) {
+    public void unsubscribe (ClientHandler clientHandler) {
         clients.remove(clientHandler);
     }
 
