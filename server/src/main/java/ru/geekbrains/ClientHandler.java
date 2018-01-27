@@ -11,60 +11,74 @@ public class ClientHandler {
     private DataInputStream in;
     private DataOutputStream out;
     private String nick;
-    private boolean isAuth = false;
-    private int timeOut = 5000;
+    private boolean isAuthorized = false;
+    private boolean timeIsOut = false;
+
+    private final long timeOut = 5000L;
 
     public String getNick() {
         return nick;
     }
 
     public ClientHandler(Server server, Socket socket) {
+        this.server = server;
+        this.socket = socket;
+        final long t = System.currentTimeMillis();
+        new Thread(() -> {
+            while (true) {
+                if (System.currentTimeMillis() >= (t + timeOut)) {
+                    try {
+                        out.writeUTF("время авторизации истекло, перезапустите клиент");
+                        System.out.println("время авторизации истекло, перезапустите клиент");
+                        timeIsOut = true;
+                        socket.close();
+                        out.close();
+                        in.close();
+                        break;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        break;
+                    }
+                }
+            }
+
+        }).start();
         try {
-            this.server = server;
-            this.socket = socket;
-            this.in = new DataInputStream(socket.getInputStream());
-            this.out = new DataOutputStream(socket.getOutputStream());
-            final long t = System.currentTimeMillis();
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
             new Thread(() -> {
                 try {
-                    while (true) {
-                        if (System.currentTimeMillis() <= (t + timeOut)) {
-                            String msg = in.readUTF();
-                            if (msg.startsWith("/auth ")) {
-                                // /auth login1 pass1
-                                String[] tokens = msg.split(" ");
-                                String nick = SQLHandler.getNickByLoginPass(tokens[1], tokens[2]);
-                                if (nick != null) {
-                                    if (server.isNickBusy(nick)) {
-                                        out.writeUTF("Учетная запись уже используется");
-                                        continue;
-                                    }
-                                    out.writeUTF("/authok " + nick);
-                                    this.nick = nick;
-                                    server.subscrible(this);
-                                    isAuth = true;
-                                    break;
-                                } else {
-                                    out.writeUTF("wrong login/password");
+                    while (!timeIsOut) {
+                        System.out.println("ништяк");
+                        String msg = in.readUTF();
+                        if (msg.startsWith("/auth ")) {
+                            // /auth login1 pass1
+                            String[] tokens = msg.split(" ");
+                            String nick = SQLHandler.getNickByLoginPass(tokens[1], tokens[2]);
+                            if (nick != null) {
+                                if (server.isNickBusy(nick)) {
+                                    out.writeUTF("Учетная запись уже используется");
+                                    continue;
                                 }
+                                out.writeUTF("/authok " + nick);
+                                ClientHandler.this.nick = nick;
+                                server.subscribe(ClientHandler.this);
+                                isAuthorized = true;
+                                break;
+                            } else {
+                                out.writeUTF("wrong login/password");
                             }
-                        } else {
-                            out.writeUTF("время авторизации истекло, перезапустите клиент");
-                            server.unsubscrible(this);
-                            socket.close();
-                            out.close();
-                            in.close();
                         }
                     }
-                    while (isAuth) {
+                    while (isAuthorized) {
                         String msg = in.readUTF();
-                        server.broadcastMsg(this, msg);
+                        server.broadcastMsg(ClientHandler.this, msg);
                         System.out.println(msg);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    server.unsubscrible(this);
+                    server.unsubscribe(ClientHandler.this);
                     try {
                         socket.close();
                     } catch (IOException e) {
